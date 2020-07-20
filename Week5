@@ -116,3 +116,61 @@ def main():
 if __name__ == "__main__":
     main()
 
+
+#!/usr/bin/env python3
+
+
+NELONEN______________________________________________________________________________________________
+import pandas as pd
+import matplotlib.pyplot as plt
+#Group the rows by year, month, and day. Get the sum for each group. Make function cyclists_per_day that does the above. 
+# The function should return a DataFrame. Make sure that the columns Hour and Weekday are not included in the
+days = dict(zip("ma ti ke to pe la su".split(), "Mon Tue Wed Thu Fri Sat Sun".split()))
+months = dict(zip("tammi helmi maalis huhti touko kesä heinä elo syys loka marras joulu".split(), range(1,13)))
+def split_date(df):
+
+    
+    df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
+    d = df["Päivämäärä"].str.split(expand=True)
+    d.columns = ["Weekday", "Day", "Month", "Year", "Hour"]
+ 
+    hourmin = d["Hour"].str.split(":", expand=True)
+    d["Hour"] = hourmin.iloc[:,0]
+ 
+    d["Weekday"] = d["Weekday"].map(days)
+    d["Month"] = d["Month"].map(months)
+    
+    d = d.astype({"Weekday": object, "Day": int, "Month": int, "Year": int, "Hour": int})
+    return d
+
+def cyclists_per_day():
+    df = pd.read_csv("src/Helsingin_pyorailijamaarat.csv", sep=";")
+    df2=split_date(df)
+    df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
+    df=df.drop(columns=['Päivämäärä'])
+    df3=pd.concat([df2,df],axis=1, ignore_index=False)
+    df3=df3.drop(columns=['Weekday','Hour'])
+    
+    group = df3.groupby(["Year","Month","Day"])[df3.columns[3:]].sum()
+    #for rivi in groups:
+
+    #group = df3.groupby(["Year"])["Auroransilta"].sum()
+    #group1=df3.groupby("Day")
+    #group2 = df3.groupby("Month")
+    #group3 = df3.groupby("Year")
+   # group1sum=group1.sum()
+    #group2sum=group2.sum()
+    #group3sum=group2.sum()
+
+    return group
+    
+def main():
+    print(cyclists_per_day())
+    a=[1,3]
+    plt.plot(a)
+    plt.show()
+    return
+
+if __name__ == "__main__":
+    main()
+
