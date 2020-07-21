@@ -173,4 +173,30 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
+    
+    W5 e5
+    ________________________________________________________________________________________
+    #!/usr/bin/env python3
+
+import pandas as pd
+
+def best_record_company():
+    df = pd.read_csv("src/UK-top40-1964-1-2.tsv", sep="\t")
+    df2 = df.groupby("Publisher")
+    df3 = df2["WoC"].sum()
+    df3 = df3.sort_values(ascending=False)
+    head = df3.head(1)
+    result = df[df["Publisher"] == head.index[0]]
+    return result
+    
+
+def main():
+    print(best_record_company())
+    return
+    
+
+if __name__ == "__main__":
+    main()
+
 
