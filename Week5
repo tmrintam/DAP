@@ -223,3 +223,82 @@ if __name__ == "__main__":
     main()
 
 
+EXCERCISE 7__________________________
+#!/usr/bin/env python3
+
+import pandas as pd
+
+def suicide_weather():
+    columns = ["Country", "Average yearly temperature (1961–1990, degrees Celsius)", "Suicide fraction"]
+    suicides = suicide_fractions()
+    table = pd.read_html("src/List_of_countries_by_average_yearly_temperature.html", index_col=0, header=0)[0]
+    df = pd.merge(table, suicides, left_index=True, right_index=True)
+    df[columns[1]] = df[columns[1]].map(lambda s: float(s.replace("\u2212", "-")))
+    corr = df[columns[1]].corr(df["Suicide fraction"],method='spearman')
+    #print(df)
+    return (suicides.shape[0], table.shape[0], df.shape[0], corr)
+
+
+def suicide_fractions():
+    df = pd.read_csv("src/who_suicide_statistics.csv", sep=",")
+    df['Suicide fraction']=df['suicides_no']/df['population']
+    df=df.groupby("country")
+    df=df['Suicide fraction'].mean()
+
+    return df
+
+def main():
+    
+    a, b, c, d = suicide_weather()
+    print(f"Suicide DataFrame has {a} rows")
+    print(f"Temperature DataFrame has {b} rows")
+    print(f"Common DataFrame has {c} rows")
+    print(f"Spearman correlation: {d}")
+    return
+    return
+
+if __name__ == "__main__":
+    main()
+
+
+EX 8_________________________________________
+#!/usr/bin/env python3
+
+import pandas as pd
+
+days = dict(zip("ma ti ke to pe la su".split(), "Mon Tue Wed Thu Fri Sat Sun".split()))
+months = dict(zip("tammi helmi maalis huhti touko kesä heinä elo syys loka marras joulu".split(), range(1,13)))
+
+
+def split_date(df):
+    df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
+    d = df["Päivämäärä"].str.split(expand=True)
+    d.columns = ["Weekday", "Day", "Month", "Year", "Hour"]
+    hourmin = d["Hour"].str.split(":", expand=True)
+    d["Hour"] = hourmin.iloc[:,0]
+    d["Weekday"] = d["Weekday"].map(days)
+    d["Month"] = d["Month"].map(months)
+    d = d.astype({"Weekday": object, "Day": int, "Month": int, "Year": int, "Hour": int})
+    return d
+
+def bicycle_timeseries():
+    df=pd.read_csv("src/Helsingin_pyorailijamaarat.csv",sep=';')
+    df2=split_date(df)
+    df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
+    df=df.drop(columns=['Päivämäärä'])
+    df3=pd.concat([df2,df],axis=1, ignore_index=False)
+
+    
+    df3["Datetime"] = pd.to_datetime(df3[["Year", "Month", "Day","Hour"]])
+    df3=df3.drop(columns=["Year", "Month", "Day","Weekday","Hour"])
+    df3 = df3.set_index('Datetime')
+    #print(df3)
+    return df3
+
+
+def main():
+    bicycle_timeseries()
+    return None
+
+if __name__ == "__main__":
+    main()
