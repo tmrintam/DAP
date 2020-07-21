@@ -282,6 +282,65 @@ def split_date(df):
     return d
 
 def bicycle_timeseries():
+
+
+#!/usr/bin/env python3
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+days = dict(zip("ma ti ke to pe la su".split(), range(1,8)))
+months = dict(zip("tammi helmi maalis huhti touko kesä heinä elo syys loka marras joulu".split(), range(1,13)))
+
+
+def split_date(df):
+
+    
+    df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
+    d = df["Päivämäärä"].str.split(expand=True)
+    d.columns = ["Weekday", "Day", "Month", "Year", "Hour"]
+ 
+    hourmin = d["Hour"].str.split(":", expand=True)
+    d["Hour"] = hourmin.iloc[:,0]
+ 
+    d["Weekday"] = d["Weekday"].map(days)
+    d["Month"] = d["Month"].map(months)
+    
+    df2 = d.astype({"Weekday": object, "Day": int, "Month": int, "Year": int, "Hour": int})
+    df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
+    df=df.drop(columns=['Päivämäärä'])
+    df3=pd.concat([df2,df],axis=1, ignore_index=False)
+    
+    
+    return df3
+
+
+EXC 9____________________________________________________
+
+def commute():
+    df = pd.read_csv("src/Helsingin_pyorailijamaarat.csv", sep=";")
+    df=split_date(df)
+    df["Datetime"] = pd.to_datetime(df[["Year", "Month", "Day"]])
+    df=df.set_index("Datetime")
+    df=df["2017-08-01":"2017-08-31"]
+    df=df.groupby("Weekday")[df.columns[5:]].sum()
+    
+    #print(df)
+    return df
+    
+def main():
+    df=commute()
+    plt.plot(df)
+    weekdays="x mon tue wed thu fri sat sun".title().split()
+    plt.gca().set_xticklabels(weekdays)
+    plt.show()
+
+    return
+
+
+if __name__ == "__main__":
+    main()
+
     df=pd.read_csv("src/Helsingin_pyorailijamaarat.csv",sep=';')
     df2=split_date(df)
     df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
