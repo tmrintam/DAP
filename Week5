@@ -200,3 +200,26 @@ if __name__ == "__main__":
     main()
 
 
+EXCERCISE 6_____________________________________________________
+#!/usr/bin/env python3
+
+import pandas as pd
+
+def suicide_fractions():
+    df = pd.read_csv("src/who_suicide_statistics.csv", sep=",")
+    #df=df.dropna(subset=['suicides_no','population'])
+    df['rivi']=df['suicides_no']/df['population']
+    df=df.groupby("country")
+    #df=df['suicides_no']/(df['population'])
+    df=df['rivi'].mean()
+    print(df)
+    return df
+
+def main():
+    suicide_fractions()
+    return
+
+if __name__ == "__main__":
+    main()
+
+
