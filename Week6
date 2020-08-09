@@ -1,0 +1,513 @@
+#!/usr/bin/env python3
+
+import numpy as np
+from sklearn.naive_bayes import GaussianNB
+from sklearn import metrics
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+def blob_classification(X, y):
+    model = GaussianNB()
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
+    model.fit(X_train, y_train)
+    #y_test = model.predict(X_test)
+    labels_fitted = model.predict(X_test)
+    acc=accuracy_score(labels_fitted, y_test)
+
+    return acc
+
+def main():
+    X,y = datasets.make_blobs(100, 2, centers=2, random_state=2, cluster_std=2.5)
+    print("The accuracy score is", blob_classification(X, y))
+    a=np.array([[2, 2, 0, 2.5],
+                [2, 3, 1, 1.5],
+                [2, 2, 6, 3.5],
+                [2, 2, 3, 1.2],
+                [2, 4, 4, 2.7]])
+    accs=[]
+    for row in a:
+        X,y = datasets.make_blobs(100, int(row[0]), centers=int(row[1]),
+                                  random_state=int(row[2]), cluster_std=row[3])
+        accs.append(blob_classification(X, y))
+    print(repr(np.hstack([a, np.array(accs)[:,np.newaxis]])))
+
+if __name__ == "__main__":
+    main()
+
+
+
+__________________________________________________________________________
+eX2
+
+#!/usr/bin/env python3
+
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn import naive_bayes
+from sklearn import metrics
+from sklearn.naive_bayes import GaussianNB
+
+def plant_classification():
+
+    data,target = load_iris(return_X_y = True)
+    X_train, X_test, y_train, y_test = train_test_split(data,target, test_size=0.2, random_state=0)
+    model = GaussianNB()
+    model.fit(X_train, y_train)
+    labels_fitted = model.predict(X_test)
+    
+    acc = metrics.accuracy_score(labels_fitted, y_test)
+    
+    return acc
+
+def main():
+    print(f"Accuracy is {plant_classification()}")
+
+if __name__ == "__main__":
+    main()
+
+
+_______________________________________________________
+EX3
+#!/usr/bin/env python3
+
+from collections import Counter
+import urllib.request
+from lxml import etree
+
+import numpy as np
+
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.model_selection import cross_val_score
+from sklearn import model_selection
+from sklearn.model_selection import KFold
+
+alphabet="abcdefghijklmnopqrstuvwxyzäö-"
+alphabet_set = set(alphabet)
+
+# Returns a list of Finnish words
+def load_finnish():
+    finnish_url="https://www.cs.helsinki.fi/u/jttoivon/dap/data/kotus-sanalista_v1/kotus-sanalista_v1.xml"
+    filename="src/kotus-sanalista_v1.xml"
+    load_from_net=False
+    if load_from_net:
+        with urllib.request.urlopen(finnish_url) as data:
+            lines=[]
+            for line in data:
+                lines.append(line.decode('utf-8'))
+        doc="".join(lines)
+    else:
+        with open(filename, "rb") as data:
+            doc=data.read()
+    tree = etree.XML(doc)
+    s_elements = tree.xpath('/kotus-sanalista/st/s')
+    return list(map(lambda s: s.text, s_elements))
+
+def load_english():
+    with open("src/words", encoding="utf-8") as data:
+        lines=map(lambda s: s.rstrip(), data.readlines())
+    return lines
+
+def get_features(a):
+    letter_counts = np.zeros((len(a),len(alphabet)))
+    alphabet_num_dict = dict(zip(list(alphabet),range(0,len(alphabet))))
+    
+    for index,word in enumerate(a):
+        word = word.lower()
+        
+        listofchars = list(word)
+        
+        for character in listofchars:
+            letter_counts[index,alphabet_num_dict[character]] = letter_counts[index,alphabet_num_dict[character]] + 1
+            
+        
+    return letter_counts
+
+
+def contains_valid_chars(s):
+    s = set(list(s))
+    valid = (s <= alphabet_set)
+    
+    
+    return valid
+
+def get_features_and_labels():
+    eng=list(load_english())
+    fin=list(load_finnish())
+    i=0
+    while i<103:
+        fin.append("moi")
+        i=i+1
+    i=0
+    while i<10:
+        eng.append("moi")
+        i=i+1
+
+    
+    fin_korj=[]
+    #Convert the Finnish words to lowercase, and then filter out those words 
+    # that contain characters that don’t belong to the alphabet.
+    for i in range(len(fin)):
+        
+        if contains_valid_chars(str(fin[i]))==True:
+             fin_korj.append(str.lower(fin[i]))
+ 
+    eng_korj=[]
+    # For the English words first filter out those words that begin 
+    # with an uppercase letter to get rid of proper nouns. 
+    # Then proceed as with the Finnish words.
+    for i in range(len(eng)):
+        if str(eng[i])[0].isupper()==False:
+            if contains_valid_chars(str(eng[i]))==True:
+                eng_korj.append(str.lower(eng[i]))
+    y0=[0]*len(fin_korj)
+    y1=[1]*len(eng_korj)
+    y=np.array([y0+y1]).T
+    f_fin=get_features(fin_korj)
+    f_eng=get_features(eng_korj)
+    X=np.vstack([f_fin,f_eng])
+    return X, np.ravel(y)
+
+
+def word_classification():
+    #kf=KFold(n_splits=5)
+    kf=KFold(n_splits=5, shuffle=True, random_state=0)
+    X,y=get_features_and_labels()
+    model = MultinomialNB()
+    #model.fit(X, y)
+    #y_fitted = model.predict(X)
+    acc=cross_val_score(model,X,y,cv=kf)
+    return(acc)
+
+
+def main():
+
+    print("Accuracy scores are:", word_classification())
+
+if __name__ == "__main__":
+    main()
+
+
+_________________________________________________________________________
+
+EX4
+
+
+import urllib.request
+from lxml import etree
+import numpy as np
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.model_selection import cross_val_score
+from sklearn import model_selection
+import pandas as pd
+import os
+import scipy
+import urllib.request
+import scipy
+from sklearn.feature_extraction.text import CountVectorizer
+import re
+import gzip
+import numpy as np
+import os
+from sklearn import metrics
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+ 
+
+def spam_detection(random_state=0, fraction=1.0):
+    with gzip.open('src/ham.txt.gz', 'rb') as f:
+        ham_content = f.readlines()
+    ham = ham_content[:int(len(ham_content)*fraction)]  
+    
+    with gzip.open('src/spam.txt.gz', 'rb') as f:
+        spam_content = f.readlines()
+    spam = spam_content[:int(len(spam_content)*fraction)] 
+    features = []
+    for i in ham:
+        features.append(i)
+    for i in spam:
+        features.append(i)
+ 
+    labels = []
+    for i in ham:
+        labels.append(0)
+    for i in spam:
+        labels.append(1)
+    label = np.array(labels) 
+    vectorizer = CountVectorizer()
+    feature = vectorizer.fit_transform(features)
+    X_train, X_test, y_train, y_test = train_test_split(feature, label, test_size=0.25, random_state=random_state)
+    model = MultinomialNB()
+    model.fit(X_train, y_train)
+ 
+    labels_fitted = model.predict(X_test)
+    acc_score = accuracy_score(y_test,labels_fitted)
+    miss=sum(y_test != labels_fitted)
+    return acc_score, len(y_test), miss
+    
+def main():
+    accuracy, total, misclassified = spam_detection()
+    print("Accuracy score:", accuracy)
+    print(f"{misclassified} messages miclassified out of {total}")
+ 
+if __name__ == "__main__":
+    main()
+ 
+ 
+ _____________________________________________________________________________________
+ EX5
+ import scipy
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn import naive_bayes
+from sklearn import metrics
+from sklearn.cluster import KMeans
+from sklearn.metrics import accuracy_score
+ 
+ 
+ 
+def find_permutation(n_clusters, real_labels, labels):
+    permutation=[]
+    for i in range(n_clusters):
+        idx = labels == i
+        new_label=scipy.stats.mode(real_labels[idx])[0][0]
+        permutation.append(new_label)
+    return permutation
+ 
+ 
+ 
+def plant_clustering():
+    iris = load_iris()
+    x = iris.data
+    y=iris.target
+    model2=KMeans(3) 
+    model=KMeans(3,random_state=12) 
+    model2=KMeans(3,random_state=0)
+    model=model.fit(x)
+    centers = model.cluster_centers_
+    pred=model.predict(x)
+    acc= accuracy_score(y, pred)
+    return acc
+# 
+ 
+def main():
+    print(plant_clustering())
+ 
+if __name__ == "__main__":
+    main()
+    ---------------------------------------------------------------------------------
+    EX6
+    
+    import scipy
+import pandas as pd
+import numpy as np
+from sklearn.cluster import DBSCAN
+from sklearn.metrics import accuracy_score
+import os
+import matplotlib.pyplot as plt
+ 
+
+ 
+def find_permutation(n_clusters, real_labels, labels):
+    if len(labels.unique()) == 2: 
+        permutation=[]
+        for i in range(n_clusters):
+            idx = labels == i
+            new_label=scipy.stats.mode(real_labels[idx])[0][0]  # Choose the most common label among data points in the cluster
+            permutation.append(new_label)
+        new_labels = [ permutation[label] for label in labels]
+        acc=accuracy_score(real_labels, new_labels)
+        return acc
+    elif len(labels.unique())==3: 
+        permutation=[]
+        real_labels=[real_labels[i] for i,x in enumerate(labels) if x!=-1]
+        labels=[i for i in labels if i!=-1]
+        real_labels=np.asarray(real_labels)
+        labels=np.asarray(labels)
+        for i in range(n_clusters):
+            idx = labels == i
+            new_label=scipy.stats.mode(real_labels[idx])[0][0]  # Choose the most common label among data points in the cluster
+            permutation.append(new_label)
+        new_labels = [ permutation[label] for label in labels]
+        acc=accuracy_score(real_labels, new_labels)
+        return acc
+    else:
+        return np.nan
+
+def nonconvex_clusters():
+    
+    df=pd.read_csv('src/data.tsv',sep='\t')
+    X=df.iloc[:,0:2]
+    eps=np.arange(5/100, 20/100, 5/100)
+    
+    labels=[]
+    for i,v in enumerate(eps):
+        print('index', i)
+        print('value', v)
+        model = DBSCAN(eps=v)
+        model.fit(X)
+        df[v]=model.labels_
+ 
+    a1=find_permutation(2, df['y'], df.iloc[:,3])
+    a2=find_permutation(2, df['y'], df.iloc[:,4])
+    a3=find_permutation(2, df['y'], df.iloc[:,5])
+    a4=find_permutation(2, df['y'], df.iloc[:,6])
+    a=[a1,a2,a3,a4]
+    a=pd.Series(a)
+    s1=len(df.iloc[:,3].unique())-1 
+    s2=len(df.iloc[:,4].unique())-1
+    s3=len(df.iloc[:,5].unique())
+    s4=len(df.iloc[:,6].unique())
+    size=[s1,s2,s3,s4]
+    size=pd.Series(size)
+    o1=sum(df.iloc[:,3]==-1)
+    o2=sum(df.iloc[:,4]==-1)
+    o3=sum(df.iloc[:,5]==-1)
+    o4=sum(df.iloc[:,6]==-1)
+    out=[o1,o2,o3,o4]
+    out=pd.Series(out)
+    eps=list(eps)
+    df = pd.DataFrame(list(zip(eps, a,size,out)), columns =['eps', 'Score','Clusters','Outliers'],dtype=float)
+
+    return df
+ 
+ 
+def main():
+    print(nonconvex_clusters())
+ 
+if __name__ == "__main__":
+    main()
+
+
+_____________________________________________________________________
+ex7
+
+#!/usr/bin/env python3
+import scipy
+import pandas as pd
+import numpy as np
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import pairwise_distances
+from matplotlib import pyplot as plt
+import seaborn as sns
+sns.set(color_codes=True)
+import scipy.spatial as sp
+import scipy.cluster.hierarchy as hc
+ 
+def toint(x):
+    nucmap = {"A": 0, "C": 1, "G":2, "T":3}
+ 
+    return nucmap[x]  
+
+def get_features_and_labels(df):
+  
+    
+    features = df["X"]
+    
+    labels = df["y"]
+
+    retVal = []
+    for line in features:
+        x = [toint(c) for c in line]
+        retVal.append(((x)))
+        #retVal.append((np.array(x)))
+    
+    return retVal, labels
+
+ 
+ 
+def find_permutation(n_clusters, real_labels, labels):    
+    permutation=[]
+    for i in range(n_clusters):
+        idx = labels == i
+        # Choose the most common label among data points in the cluster
+        new_label=scipy.stats.mode(real_labels[idx])[0][0]
+        permutation.append(new_label)
+    return permutation
+ 
+ 
+def plot(distances, method='average', affinity='euclidean'):
+    mylinkage = hc.linkage(sp.distance.squareform(distances), method=method)
+    g=sns.clustermap(distances, row_linkage=mylinkage, col_linkage=mylinkage )
+    g.fig.suptitle(f"Hierarchical clustering using {method} linkage and {affinity} affinity")
+    plt.show()
+ 
+ 
+def cluster_euclidean(file1):
+    df = pd.read_csv(file1, sep = '\t', header=0)
+    X, y = get_features_and_labels(df)
+    cluster = AgglomerativeClustering(n_clusters = 2, affinity = 'euclidean', 
+                                      linkage = "average").fit(X,y)
+    
+    permutation = find_permutation(2, y, cluster.labels_)
+    new = [permutation[label] for label in cluster.labels_]
+    acc=accuracy_score(y, new)
+    
+    return acc
+ 
+ 
+def cluster_hamming(file1):
+    df = pd.read_csv(file1, sep = '\t', header=0)
+    X, y = get_features_and_labels(df)
+    
+    hamming = pairwise_distances(X, metric = 'hamming')
+    
+    cluster = AgglomerativeClustering(n_clusters = 2, affinity = 'precomputed', 
+                                      linkage = "average").fit(hamming)
+    
+    cluster.fit_predict(hamming)
+    
+    permutation = find_permutation(2, y, cluster.labels_)
+    new = [permutation[label] for label in cluster.labels_]
+ 
+    acc=accuracy_score(y, new)
+    
+    return acc
+ 
+ 
+def main():
+    data = "src/data.seq"
+
+    print("Accuracy score with Euclidean affinity is", cluster_euclidean(data))
+    print("Accuracy score with Hamming affinity is", cluster_hamming(data))
+ 
+if __name__ == "__main__":
+    main()
+    __________________________________________________________
+    
+    EX8
+    
+    
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import math
+from sklearn.decomposition import PCA
+ 
+ 
+def explained_variance():
+    data = pd.read_csv('src/data.tsv', header = 0, sep = "\t")
+    pca=PCA(10)
+    pca.fit(data)
+    pcavar = pca.explained_variance_
+    print(pcavar)
+    datavar = []
+    for i in data:
+        rivivar = np.var(data[i].to_numpy())
+        datavar.append(rivivar)
+    x = np.arange(1,len(pcavar) + 1)
+    plt.plot(x,np.cumsum(pcavar))
+    plt.show()
+    return datavar, pcavar
+ 
+def main():
+    v, ev = explained_variance()
+    print(f"The variances are: {v[0]:.3f} {v[1]:.3f} {v[2]:.3f} {v[3]:.3f} {v[4]:.3f} {v[5]:.3f} {v[6]:.3f} {v[7]:.3f} {v[8]:.3f} {v[9]:.3f}")
+    print(f"The explained variances after PCA are: {ev[0]:.3f} {ev[1]:.3f} {ev[2]:.3f} {ev[3]:.3f} {ev[4]:.3f} {ev[5]:.3f} {ev[6]:.3f} {ev[7]:.3f} {ev[8]:.3f} {ev[9]:.3f}")
+    
+ 
+if __name__ == "__main__":
+    main()
+ 
