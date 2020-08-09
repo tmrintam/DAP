@@ -438,3 +438,123 @@ def main():
  
 if __name__ == "__main__":
     main()
+
+
+
+
+EX 10
+
+import numpy as np
+from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
+
+def fit_line(x, y):
+    model=LinearRegression(fit_intercept=True)
+    model.fit(x[:,np.newaxis], y)
+    xfit=np.linspace(x[0],10,100)
+    yfit=model.predict(xfit[:, np.newaxis])
+   
+    # The following will draw as many line segments as there are columns in matrices x and y
+    #plt.plot(np.vstack([x,x]), np.vstack([y, model.predict(x[:, np.newaxis])]), color="red");
+    #plt.show()
+    return model.coef_[0], model.intercept_
+    
+def main():
+
+    x=np.array([1,2,3])
+    y=np.array([1,2.5,3])+1
+    slope,inte=fit_line(x,y)
+    print(f"Slope: {slope}")
+    print(f"Intercept: {inte}")
+    model=LinearRegression(fit_intercept=True)
+    model.fit(x[:,np.newaxis], y)
+    xfit=np.linspace(x[0],10,100)
+    yfit=model.predict(xfit[:, np.newaxis])
+    plt.plot(xfit,yfit, color="black")
+    plt.plot(x,y, 'o')
+    plt.show()
+
+if __name__ == "__main__":
+    main()
+
+EX 11
+
+
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+def mystery_data():
+    df=pd.read_csv("src/mystery_data.tsv",sep="\t")
+    
+    dfx=df[["X1","X2","X3","X4","X5"]]
+    dfy=df["Y"]
+    #print(dfy)
+    reg=LinearRegression(fit_intercept=False)
+    reg.fit(dfx,dfy)
+    r_sq = reg.score(dfx, dfy)
+    #print('coefficient of determination:', r_sq)
+    #print('intercept:', reg.intercept_)
+   # print('slope:', reg.coef_)
+    return reg.coef_
+
+def main():
+    
+    coefficients = mystery_data()
+    i=1
+    for x in coefficients:
+
+        print(f"Coefficient of X{i} is {x}")
+        i=i+1
+    # print the coefficients here
+    
+if __name__ == "__main__":
+    main()
+    '
+ ex 12
+ #!/usr/bin/env python3
+
+import pandas as pd
+from sklearn import linear_model
+from sklearn.linear_model import LinearRegression
+import numpy as np
+
+
+def coefficient_of_determination():
+    df = pd.read_csv("mystery_data.tsv", sep="\t")
+    dfx = df.loc[:, "X1":"X5"]
+
+    dfy = np.array(df['Y'].values.tolist())
+
+   
+
+    reg = LinearRegression(fit_intercept=False)
+    reg2 = LinearRegression(fit_intercept=True)
+    reg.fit(dfx, dfy)
+    lista = []
+    lista.append(reg.score(dfx,dfy))
+    #lista.append(0.0258828579115)
+    
+
+    for i in range(1, 6):
+        dfx = df.iloc[:, i-1]
+        dfx = np.array(dfx).reshape(-1,1)
+
+        reg2.fit(dfx, dfy)
+        lista.append(reg2.score(dfx, dfy))
+    return lista
+ 
+ 
+
+
+def main():
+    res = coefficient_of_determination()
+    print(f"R2-score with feature(s) X: {res[0]}")
+    for i, c in enumerate(res):
+        if i == 0:
+            continue
+        print(f"R2-score with feature(s) X{i}: {c}")
+ 
+if __name__ == "__main__":
+    main()
+    
+    
